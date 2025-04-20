@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Saat dipilih -->
+    <item android:color="#3F51B5" android:state_checked="true" />
+    <!-- Saat tidak dipilih -->
+    <item android:color="#7E7A7A" android:state_checked="false" />
+</selector>

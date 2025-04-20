@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "957541605512",
+    "firebase_url": "https://smartvest-rinda-default-rtdb.firebaseio.com",
+    "project_id": "smartvest-rinda",
+    "storage_bucket": "smartvest-rinda.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957541605512:android:799d9bd4c812b8ac053f3d",
+        "android_client_info": {
+          "package_name": "com.rindakusuma.runvest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBAblHT5ZoBPNFjl8qIzNuDepo8QV90lLc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
