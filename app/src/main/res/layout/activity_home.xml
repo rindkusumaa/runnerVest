@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="#F5F6FA"
     tools:context=".HomeActivity">
 
     <!-- Greeting -->
@@ -12,129 +13,155 @@
         android:id="@+id/greetingTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Good Day,"
-        android:textColor="#000000"
+        android:text="Good Day, "
+        android:textColor="#333333"
         android:textSize="20sp"
+        android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="24dp"
         android:layout_marginStart="24dp" />
 
-    <!-- Heart Rate -->
-    <LinearLayout
-        android:id="@+id/heartRateCard"
+    <!-- Grid Layout Section -->
+    <android.widget.GridLayout
+        android:id="@+id/infoCards"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
+        android:columnCount="2"
+        android:alignmentMode="alignMargins"
         android:padding="16dp"
-        android:background="#3F51B5"
+        android:rowOrderPreserved="false"
         app:layout_constraintTop_toBottomOf="@id/greetingTextView"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp">
+        android:layout_marginTop="16dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Heart Rate Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="Heart Rate"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
+            android:layout_margin="8dp"
+            android:layout_columnWeight="1"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="8dp"
+            app:strokeColor="@android:color/transparent">
 
-        <TextView
-            android:id="@+id/heartRateTextView"
-            android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/icon_heartbg"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Heart Rate"
+                    android:textColor="#757575"
+                    android:textSize="14sp"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:id="@+id/heartRateTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="89 bpm"
+                    android:textColor="#000000"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Temperature Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="89bpm"
-            android:textColor="#FFFFFF"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:layout_gravity="center" />
-    </LinearLayout>
+            android:layout_margin="8dp"
+            android:layout_columnWeight="1"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="8dp"
+            app:strokeColor="@android:color/transparent">
 
-    <!-- Temperature -->
-    <LinearLayout
-        android:id="@+id/temperatureCard"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        android:background="#3F51B5"
-        app:layout_constraintTop_toBottomOf="@id/heartRateCard"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:padding="16dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Temperature"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:src="@drawable/icon_suhu"/>
 
-        <TextView
-            android:id="@+id/temperatureTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="36°"
-            android:textColor="#FFFFFF"
-            android:textSize="32sp"
-            android:textStyle="bold"
-            android:layout_gravity="center" />
-    </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Temperature"
+                    android:textColor="#757575"
+                    android:textSize="14sp"
+                    android:layout_marginTop="8dp" />
+
+                <TextView
+                    android:id="@+id/temperatureTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="36°C"
+                    android:textColor="#000000"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </android.widget.GridLayout>
 
     <!-- Speedometer Section -->
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/speedometerSection"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/temperatureCard"
+        app:layout_constraintTop_toBottomOf="@id/infoCards"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="16dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="24dp">
+        android:layout_margin="16dp">
 
         <TextView
+            android:id="@+id/speedLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Speedometer"
             android:textColor="#000000"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+        <ImageView
+            android:id="@+id/speedometerImage"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_marginTop="8dp"
+            android:src="@drawable/baseline_speed_24"
+            app:layout_constraintTop_toBottomOf="@id/speedLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-            <ImageView
-                android:id="@+id/speedometerImage"
-                android:layout_width="200dp"
-                android:layout_height="200dp"
-                android:layout_marginTop="16dp"
-                android:src="@drawable/baseline_speed_24"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
-
-            <TextView
-                android:id="@+id/speedTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="10.5 Km/h"
-                android:textColor="#000000"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                app:layout_constraintTop_toBottomOf="@id/speedometerImage"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                android:layout_marginTop="8dp" />
-        </androidx.constraintlayout.widget.ConstraintLayout>
-    </LinearLayout>
+        <TextView
+            android:id="@+id/speedTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="10.5 Km/h"
+            android:textColor="#000000"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toBottomOf="@id/speedometerImage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginTop="8dp" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
