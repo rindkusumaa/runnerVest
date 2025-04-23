@@ -7,6 +7,17 @@ import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.database.*
 import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
+import androidx.core.app.NotificationCompat
+
 import com.rindakusuma.runvest.LogActivity
 import com.rindakusuma.runvest.databinding.ActivityHomeBinding
 
@@ -17,6 +28,18 @@ class HomeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1
+                )
+            }
+        }
 
         database = FirebaseDatabase.getInstance().reference
 
@@ -40,13 +63,17 @@ class HomeActivity : AppCompatActivity() {
             }
         }
 
-
         // Ambil BPM dari pulse-sensor
-        database.child("pulse-sensor").child("bpm")
+        database.child("data_sensor").child("pulse-sensor").child("bpm")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val bpm = snapshot.getValue(Int::class.java)
                     heartRateTextView?.text = "${bpm ?: "-"} bpm"
+
+                    // Cek kondisi untuk notifikasi
+                    if (bpm != null && bpm > 100) {
+                        showNotification("Peringatan Kesehatan", "Detak jantung terlalu tinggi!")
+                    }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
@@ -54,21 +81,26 @@ class HomeActivity : AppCompatActivity() {
                 }
             })
 
-        // Ambil suhu objek dari sensor-mlx
-        database.child("sensor-mlx").child("suhu-objek")
+        // Ambil suhu tubuh dari sensor-suhu
+        database.child("data_sensor").child("sensor-suhu").child("suhu-tubuh")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val suhuObjek = snapshot.getValue(Double::class.java)
-                    temperatureTextView?.text = "${suhuObjek ?: "-"}°"
+                    val suhuTubuh = snapshot.getValue(Double::class.java)
+                    temperatureTextView?.text = "${suhuTubuh ?: "-"}°"
+
+                    // Cek kondisi untuk notifikasi
+                    if (suhuTubuh != null && suhuTubuh >= 40.0) {
+                        showNotification("Peringatan Kesehatan", "Suhu tubuh terlalu tinggi!")
+                    }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseError", "sensor-mlx: ${error.message}")
+                    Log.e("FirebaseError", "sensor-suhu: ${error.message}")
                 }
             })
 
         // Ambil kecepatan dari GPS
-        database.child("GPS").child("speed")
+        database.child("data_sensor").child("GPS").child("speed")
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val speed = snapshot.getValue(Double::class.java)
@@ -79,6 +111,24 @@ class HomeActivity : AppCompatActivity() {
                     Log.e("FirebaseError", "GPS: ${error.message}")
                 }
             })
+    }
 
+    private fun showNotification(title: String, message: String) {
+        val channelId = "runvest_channel"
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId, "Runvest Alerts", NotificationManager.IMPORTANCE_HIGH)
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setSmallIcon(R.drawable.icon_warning) // Ganti dengan icon kamu
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .build()
+
+        notificationManager.notify(1, notification)
     }
 }
