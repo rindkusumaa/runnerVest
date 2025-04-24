@@ -16,18 +16,23 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.widget.ImageView
 import androidx.core.app.NotificationCompat
-
+import com.google.firebase.auth.FirebaseAuth
 import com.rindakusuma.runvest.LogActivity
 import com.rindakusuma.runvest.databinding.ActivityHomeBinding
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var database: DatabaseReference
+    private lateinit var auth: FirebaseAuth
+    private lateinit var greetingText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+
+        auth = FirebaseAuth.getInstance()
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -47,6 +52,17 @@ class HomeActivity : AppCompatActivity() {
         val temperatureTextView: TextView? = findViewById(R.id.temperatureTextView)
         val speedTextView: TextView? = findViewById(R.id.speedTextView)
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        greetingText = findViewById(R.id.greetingTextView)
+
+        val logoutIcon = findViewById<ImageView>(R.id.logoutIcon)
+
+        logoutIcon.setOnClickListener {
+            auth.signOut()  // Logout dari Firebase
+            val intent = Intent(this, LoginActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            startActivity(intent)
+            finish()
+        }
 
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -61,6 +77,20 @@ class HomeActivity : AppCompatActivity() {
                 }
                 else -> false
             }
+        }
+
+        // Tampilkan sapaan pengguna login
+        val user = auth.currentUser
+        if (user != null) {
+            val uid = user.uid
+            database.child("users").child(uid).child("name").get()
+                .addOnSuccessListener { snapshot ->
+                    val name = snapshot.getValue(String::class.java) ?: "Runner"
+                    greetingText.text = "Good day, $name 👋"
+                }
+                .addOnFailureListener {
+                    greetingText.text = "Hello, ${user.email} 👋"
+                }
         }
 
         // Ambil BPM dari pulse-sensor
@@ -125,7 +155,7 @@ class HomeActivity : AppCompatActivity() {
         val notification = NotificationCompat.Builder(this, channelId)
             .setContentTitle(title)
             .setContentText(message)
-            .setSmallIcon(R.drawable.icon_warning) // Ganti dengan icon kamu
+            .setSmallIcon(R.drawable.icon_warning)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .build()
 
