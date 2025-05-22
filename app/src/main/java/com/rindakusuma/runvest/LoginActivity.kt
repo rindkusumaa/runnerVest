@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
@@ -34,10 +35,19 @@ class LoginActivity : AppCompatActivity() {
             finish()
         }
 
+
         emailField = findViewById(R.id.emailEditText)
         passwordField = findViewById(R.id.passwordEditText)
         loginBtn = findViewById(R.id.loginButton)
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility)
+
+        val registerTextView: TextView = findViewById(R.id.registerTextView)
+
+        registerTextView.setOnClickListener {
+            val intent = Intent(this, RegisterActivity::class.java)
+            startActivity(intent)
+        }
+
 
         loginBtn.setOnClickListener {
             val email = emailField.text.toString()

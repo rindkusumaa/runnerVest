@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    card_view:cardCornerRadius="12dp"
-    card_view:cardElevation="4dp"
-    android:layout_marginBottom="12dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
+    android:layout_marginHorizontal="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -14,21 +15,30 @@
         android:padding="16dp">
 
         <TextView
-            android:id="@+id/logDate"
+            android:id="@+id/dateTimeTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="17 April 2025, 10:00"
-            android:textStyle="bold"
-            android:textColor="#000000"
-            android:textSize="16sp" />
+            android:text="12 May 2025, 06:45"
+            android:textSize="14sp"
+            android:textColor="#757575" />
 
         <TextView
-            android:id="@+id/logDetail"
+            android:id="@+id/distanceLogTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="BPM: 85, Suhu: 36.5°C, Kecepatan: 10.2 km/jam"
-            android:textColor="#444444"
-            android:textSize="14sp"
+            android:text="Distance: 2.35 km"
+            android:textSize="16sp"
+            android:textColor="#000000"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/speedLogTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Avg Speed: 9.5 km/h"
+            android:textSize="16sp"
+            android:textColor="#000000"
             android:layout_marginTop="4dp" />
+
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

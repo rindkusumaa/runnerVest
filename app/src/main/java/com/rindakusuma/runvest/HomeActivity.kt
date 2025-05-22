@@ -3,37 +3,44 @@ package com.rindakusuma.runvest
 import android.os.Bundle
 import android.util.Log
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.firebase.database.*
+import android.widget.ImageView
+import android.widget.Toast
 import android.content.Intent
+import android.content.Context
 import android.Manifest
 import android.content.pm.PackageManager
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.Context
 import android.os.Build
-import android.widget.ImageView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
-import com.rindakusuma.runvest.LogActivity
-import com.rindakusuma.runvest.databinding.ActivityHomeBinding
+import com.google.firebase.database.*
 
 class HomeActivity : AppCompatActivity() {
 
     private lateinit var database: DatabaseReference
     private lateinit var auth: FirebaseAuth
-    private lateinit var greetingText: TextView
+
+    private lateinit var heartRateTextView: TextView
+    private lateinit var temperatureTextView: TextView
+    private lateinit var speedTextView: TextView
+    private lateinit var distanceTextView: TextView
+    private lateinit var greetingTextView: TextView
+    private lateinit var logoutIcon: ImageView
+    private lateinit var bottomNavigation: BottomNavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
         auth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance().reference
 
+        // Permission untuk notifikasi (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED
@@ -46,29 +53,78 @@ class HomeActivity : AppCompatActivity() {
             }
         }
 
-        database = FirebaseDatabase.getInstance().reference
+        // Inisialisasi UI
+        heartRateTextView = findViewById(R.id.heartRateTextView)
+        temperatureTextView = findViewById(R.id.temperatureTextView)
+        speedTextView = findViewById(R.id.speedTextView)
+        distanceTextView = findViewById(R.id.distanceTextView)
+        greetingTextView = findViewById(R.id.greetingTextView)
+        logoutIcon = findViewById(R.id.logoutIcon)
+        bottomNavigation = findViewById(R.id.bottomNavigation)
 
-        val heartRateTextView: TextView? = findViewById(R.id.heartRateTextView)
-        val temperatureTextView: TextView? = findViewById(R.id.temperatureTextView)
-        val speedTextView: TextView? = findViewById(R.id.speedTextView)
-        val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
-        greetingText = findViewById(R.id.greetingTextView)
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show()
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+            return
+        }
 
-        val logoutIcon = findViewById<ImageView>(R.id.logoutIcon)
+        // Ambil nama user dari profile
+        database.child("users").child(uid).child("profile").child("name").get()
+            .addOnSuccessListener { snapshot ->
+                val name = snapshot.getValue(String::class.java) ?: "Runner"
+                greetingTextView.text = "Good day, $name 👋"
+            }
+            .addOnFailureListener {
+                greetingTextView.text = "Hello, ${auth.currentUser?.email} 👋"
+            }
 
+        // Ambil data aktivitas terbaru
+        getLatestAktivitasSnapshot(uid) { latestSnapshot ->
+            if (latestSnapshot == null) {
+                Toast.makeText(this, "Belum ada data aktivitas", Toast.LENGTH_SHORT).show()
+                return@getLatestAktivitasSnapshot
+            }
+
+            // BPM
+            val bpm = latestSnapshot.child("pulse-sensor/bpm").getValue(Int::class.java)
+            heartRateTextView.text = "${bpm ?: "-"} bpm"
+            if (bpm != null && bpm > 190) {
+                showNotification("Peringatan Kesehatan", "Detak jantung terlalu tinggi!")
+            }
+
+            // Suhu tubuh
+            val suhu = latestSnapshot.child("sensor-suhu/suhu-tubuh").getValue(Int::class.java)
+            temperatureTextView.text = "${suhu ?: "-"}°"
+            if (suhu != null && suhu >= 42) {
+                showNotification("Peringatan Kesehatan", "Suhu tubuh terlalu tinggi!")
+            }
+
+            // Kecepatan
+            val speed = latestSnapshot.child("GPS/speed").getValue(Double::class.java)
+            val speedFormatted = if (speed != null) String.format("%.2f", speed) else "-"
+            speedTextView.text = "$speedFormatted km/jam"
+
+            // Jarak
+            val jarak = latestSnapshot.child("GPS/jarak").getValue(Double::class.java)
+            val jarakFormatted = if (jarak != null) String.format("%.2f", jarak) else "-"
+            distanceTextView.text = "$jarakFormatted km"
+        }
+
+        // Logout
         logoutIcon.setOnClickListener {
-            auth.signOut()  // Logout dari Firebase
+            auth.signOut()
             val intent = Intent(this, LoginActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
             startActivity(intent)
             finish()
         }
 
+        // Navigasi
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
-                R.id.nav_home -> {
-                    true
-                }
+                R.id.nav_home -> true
                 R.id.nav_log -> {
                     startActivity(Intent(this, LogActivity::class.java))
                     overridePendingTransition(0, 0)
@@ -78,71 +134,25 @@ class HomeActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
 
-        // Tampilkan sapaan pengguna login
-        val user = auth.currentUser
-        if (user != null) {
-            val uid = user.uid
-            database.child("users").child(uid).child("name").get()
-                .addOnSuccessListener { snapshot ->
-                    val name = snapshot.getValue(String::class.java) ?: "Runner"
-                    greetingText.text = "Good day, $name 👋"
-                }
-                .addOnFailureListener {
-                    greetingText.text = "Hello, ${user.email} 👋"
-                }
-        }
-
-        // Ambil BPM dari pulse-sensor
-        database.child("data_sensor").child("pulse-sensor").child("bpm")
-            .addValueEventListener(object : ValueEventListener {
+    // Fungsi bantu: ambil aktivitas terakhir berdasarkan timestamp
+    private fun getLatestAktivitasSnapshot(uid: String, callback: (DataSnapshot?) -> Unit) {
+        val aktivitasRef = database.child("users").child(uid).child("aktivitas")
+        aktivitasRef.orderByKey().limitToLast(1)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    val bpm = snapshot.getValue(Int::class.java)
-                    heartRateTextView?.text = "${bpm ?: "-"} bpm"
-
-                    // Cek kondisi untuk notifikasi
-                    if (bpm != null && bpm > 100) {
-                        showNotification("Peringatan Kesehatan", "Detak jantung terlalu tinggi!")
-                    }
+                    val latestSnapshot = snapshot.children.firstOrNull()
+                    callback(latestSnapshot)
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseError", "pulse-sensor: ${error.message}")
-                }
-            })
-
-        // Ambil suhu tubuh dari sensor-suhu
-        database.child("data_sensor").child("sensor-suhu").child("suhu-tubuh")
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val suhuTubuh = snapshot.getValue(Double::class.java)
-                    temperatureTextView?.text = "${suhuTubuh ?: "-"}°"
-
-                    // Cek kondisi untuk notifikasi
-                    if (suhuTubuh != null && suhuTubuh >= 40.0) {
-                        showNotification("Peringatan Kesehatan", "Suhu tubuh terlalu tinggi!")
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseError", "sensor-suhu: ${error.message}")
-                }
-            })
-
-        // Ambil kecepatan dari GPS
-        database.child("data_sensor").child("GPS").child("speed")
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val speed = snapshot.getValue(Double::class.java)
-                    speedTextView?.text = "${speed ?: "-"} km/jam"
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("FirebaseError", "GPS: ${error.message}")
+                    callback(null)
                 }
             })
     }
 
+    // Tampilkan notifikasi
     private fun showNotification(title: String, message: String) {
         val channelId = "runvest_channel"
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

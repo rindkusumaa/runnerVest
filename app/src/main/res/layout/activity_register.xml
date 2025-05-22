@@ -1,4 +1,4 @@
-<!-- res/layout/activity_login.xml -->
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="#F8F9FA"
@@ -7,7 +7,7 @@
     android:padding="24dp">
 
     <LinearLayout
-        android:id="@+id/loginForm"
+        android:id="@+id/registerForm"
         android:orientation="vertical"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -19,14 +19,25 @@
 
         <TextView
             android:id="@+id/title"
-            android:layout_width="220dp"
-            android:layout_height="40dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:layout_marginBottom="24dp"
-            android:text="Let’s Get Moving 🏃‍♂️"
+            android:text="Create Account ✨"
             android:textColor="#1E1E1E"
             android:textSize="24sp"
             android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/nameEditText"
+            android:hint="Full Name"
+            android:padding="16dp"
+            android:background="@drawable/bg_input"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#1E1E1E"
+            android:textColorHint="#9E9E9E"
+            android:layout_marginBottom="16dp"/>
 
         <EditText
             android:id="@+id/emailEditText"
@@ -40,7 +51,6 @@
             android:textColorHint="#9E9E9E"
             android:layout_marginBottom="16dp"/>
 
-        <!-- 👇 Tambahkan FrameLayout untuk password dengan ikon -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -66,30 +76,17 @@
                 android:layout_marginEnd="16dp"
                 android:src="@drawable/ic_visibility"
                 android:contentDescription="Toggle password visibility"/>
-
-
         </FrameLayout>
-        <TextView
-            android:id="@+id/registerTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Belum punya akun? Daftar di sini"
-            android:textColor="#3F51B5"
-            android:textSize="14sp"
-            android:layout_gravity="center"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="20dp"/>
-
 
         <Button
-            android:id="@+id/loginButton"
-            android:text="Login"
+            android:id="@+id/registerButton"
+            android:text="Register"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
-            android:backgroundTint="#4CAF50"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_button"/>
+            android:background="@drawable/bg_button"
+            android:backgroundTint="#4CAF50"/>
     </LinearLayout>
 
     <ProgressBar
