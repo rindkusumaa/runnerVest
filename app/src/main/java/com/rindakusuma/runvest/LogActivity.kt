@@ -44,15 +44,12 @@ class LogActivity : AppCompatActivity() {
         adapter = ActivityLogAdapter(activityLogs)
         recyclerView.adapter = adapter
 
-        // Refresh saat swipe
         swipeRefreshLayout.setOnRefreshListener {
             ambilData(uid)
         }
 
-        // Pertama kali ambil data
         ambilData(uid)
 
-        // Bottom Navigation
         val bottomNavigation = findViewById<BottomNavigationView>(R.id.bottomNavigation)
         bottomNavigation.selectedItemId = R.id.nav_log
         bottomNavigation.setOnItemSelectedListener { item ->
@@ -72,13 +69,14 @@ class LogActivity : AppCompatActivity() {
     private fun ambilData(uid: String) {
         swipeRefreshLayout.isRefreshing = true
 
-        val aktivitasRef = database.child("users").child(uid).child("aktivitas")
+        val aktivitasRef = database.child("aktivitas").child(uid)
         aktivitasRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 activityLogs.clear()
 
                 for (dataSnapshot in snapshot.children) {
                     val timestamp = dataSnapshot.key ?: continue
+
                     val formattedTime = try {
                         val sdfInput = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
                         val sdfOutput = SimpleDateFormat("dd MMM yyyy HH:mm", Locale.getDefault())
@@ -88,15 +86,17 @@ class LogActivity : AppCompatActivity() {
                         timestamp
                     }
 
-
-                    val gpsSnapshot = dataSnapshot.child("GPS")
-                    val distance = gpsSnapshot.child("jarak").getValue(Double::class.java) ?: 0.0
-                    val speed = gpsSnapshot.child("speed").getValue(Double::class.java) ?: 0.0
+                    val distance = dataSnapshot.child("jarak").getValue(Double::class.java) ?: 0.0
+                    val speed = dataSnapshot.child("kecepatan").getValue(Double::class.java) ?: 0.0
+                    val detak = dataSnapshot.child("detakJantung").getValue(Int::class.java) ?: 0
+                    val suhu = dataSnapshot.child("suhuTubuh").getValue(Int::class.java) ?: 0
 
                     val log = ActivityLog(
                         formattedTime,
                         String.format("%.2f km", distance),
-                        String.format("%.2f km/h", speed)
+                        String.format("%.2f km/h", speed),
+                        "$detak bpm",
+                        "$suhu°"
                     )
                     activityLogs.add(log)
                 }
@@ -113,4 +113,3 @@ class LogActivity : AppCompatActivity() {
         })
     }
 }
-

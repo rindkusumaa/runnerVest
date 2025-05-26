@@ -13,6 +13,8 @@ class ActivityLogAdapter(private val logs: List<ActivityLog>) :
         val dateTime: TextView = itemView.findViewById(R.id.dateTimeTextView)
         val distance: TextView = itemView.findViewById(R.id.distanceLogTextView)
         val speed: TextView = itemView.findViewById(R.id.speedLogTextView)
+        val heartRate: TextView = itemView.findViewById(R.id.heartRateLogTextView)
+        val temperature: TextView = itemView.findViewById(R.id.temperatureLogTextView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): LogViewHolder {
@@ -26,6 +28,8 @@ class ActivityLogAdapter(private val logs: List<ActivityLog>) :
         holder.dateTime.text = log.dateTime
         holder.distance.text = "Distance: ${log.distance}"
         holder.speed.text = "Avg Speed: ${log.speed}"
+        holder.heartRate.text = "Heart Rate: ${log.heartRate}"
+        holder.temperature.text = "Body Temp: ${log.temperature}"
     }
 
     override fun getItemCount(): Int = logs.size

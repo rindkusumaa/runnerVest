@@ -40,7 +40,7 @@ class HomeActivity : AppCompatActivity() {
         auth = FirebaseAuth.getInstance()
         database = FirebaseDatabase.getInstance().reference
 
-        // Permission untuk notifikasi (Android 13+)
+        // Permission notifikasi (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED
@@ -70,8 +70,11 @@ class HomeActivity : AppCompatActivity() {
             return
         }
 
-        // Ambil nama user dari profile
-        database.child("users").child(uid).child("profile").child("name").get()
+        // Set UID ke config agar ESP32 tahu
+        database.child("config").child("activeDeviceUid").setValue(uid)
+
+        // Ambil nama user
+        database.child("users").child(uid).child("name").get()
             .addOnSuccessListener { snapshot ->
                 val name = snapshot.getValue(String::class.java) ?: "Runner"
                 greetingTextView.text = "Good day, $name 👋"
@@ -80,34 +83,31 @@ class HomeActivity : AppCompatActivity() {
                 greetingTextView.text = "Hello, ${auth.currentUser?.email} 👋"
             }
 
-        // Ambil data aktivitas terbaru
+        // Ambil data aktivitas terbaru dari path: aktivitas/uid/timestamp
         getLatestAktivitasSnapshot(uid) { latestSnapshot ->
             if (latestSnapshot == null) {
                 Toast.makeText(this, "Belum ada data aktivitas", Toast.LENGTH_SHORT).show()
                 return@getLatestAktivitasSnapshot
             }
 
-            // BPM
-            val bpm = latestSnapshot.child("pulse-sensor/bpm").getValue(Int::class.java)
-            heartRateTextView.text = "${bpm ?: "-"} bpm"
-            if (bpm != null && bpm > 190) {
+            // Ambil nilai dan tampilkan
+            val detak = latestSnapshot.child("detakJantung").getValue(Int::class.java)
+            heartRateTextView.text = "${detak ?: "-"} bpm"
+            if (detak != null && detak > 190) {
                 showNotification("Peringatan Kesehatan", "Detak jantung terlalu tinggi!")
             }
 
-            // Suhu tubuh
-            val suhu = latestSnapshot.child("sensor-suhu/suhu-tubuh").getValue(Int::class.java)
+            val suhu = latestSnapshot.child("suhuTubuh").getValue(Double::class.java)?.toInt()
             temperatureTextView.text = "${suhu ?: "-"}°"
             if (suhu != null && suhu >= 42) {
                 showNotification("Peringatan Kesehatan", "Suhu tubuh terlalu tinggi!")
             }
 
-            // Kecepatan
-            val speed = latestSnapshot.child("GPS/speed").getValue(Double::class.java)
+            val speed = latestSnapshot.child("kecepatan").getValue(Double::class.java)
             val speedFormatted = if (speed != null) String.format("%.2f", speed) else "-"
             speedTextView.text = "$speedFormatted km/jam"
 
-            // Jarak
-            val jarak = latestSnapshot.child("GPS/jarak").getValue(Double::class.java)
+            val jarak = latestSnapshot.child("jarak").getValue(Double::class.java)
             val jarakFormatted = if (jarak != null) String.format("%.2f", jarak) else "-"
             distanceTextView.text = "$jarakFormatted km"
         }
@@ -121,7 +121,7 @@ class HomeActivity : AppCompatActivity() {
             finish()
         }
 
-        // Navigasi
+        // Navigasi bawah
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> true
@@ -136,9 +136,9 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
-    // Fungsi bantu: ambil aktivitas terakhir berdasarkan timestamp
+    // Ambil aktivitas terakhir dari: aktivitas/uid/...
     private fun getLatestAktivitasSnapshot(uid: String, callback: (DataSnapshot?) -> Unit) {
-        val aktivitasRef = database.child("users").child(uid).child("aktivitas")
+        val aktivitasRef = database.child("aktivitas").child(uid)
         aktivitasRef.orderByKey().limitToLast(1)
             .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
