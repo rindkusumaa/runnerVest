@@ -161,7 +161,7 @@ class HomeActivity : AppCompatActivity() {
         database.child("config").child("activeDeviceUid").setValue(uid)
 
         // Get user name
-        database.child("users").child(uid).child("name").get()
+        database.child("users").child(uid).child("profile").child("name").get()
             .addOnSuccessListener { snapshot ->
                 val name = snapshot.getValue(String::class.java) ?: "Runner"
                 greetingTextView.text = "Good day, $name 👋"
