@@ -13,6 +13,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.os.Build
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -36,6 +37,9 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var greetingTextView: TextView
     private lateinit var logoutIcon: ImageView
     private lateinit var bottomNavigation: BottomNavigationView
+    private lateinit var startButton: Button
+    private lateinit var stopButton: Button
+
 
     companion object {
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
@@ -148,6 +152,8 @@ class HomeActivity : AppCompatActivity() {
         greetingTextView = findViewById(R.id.greetingTextView)
         logoutIcon = findViewById(R.id.logoutIcon)
         bottomNavigation = findViewById(R.id.bottomNavigation)
+        startButton = findViewById(R.id.btnStart)
+        stopButton = findViewById(R.id.btnStop)
     }
 
     private fun handleUnauthenticatedUser() {
@@ -204,7 +210,7 @@ class HomeActivity : AppCompatActivity() {
         // Temperature
         val suhu = snapshot.child("suhuTubuh").getValue(Double::class.java)?.toInt()
         temperatureTextView.text = "${suhu ?: "-"}°"
-        if (suhu != null && suhu >= 42) {
+        if (suhu != null && suhu >= 39) {
             showHealthAlert("Peringatan Kesehatan", "Suhu tubuh terlalu tinggi!")
         }
 
@@ -220,6 +226,17 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupEventListeners() {
+        // Start button
+        startButton.setOnClickListener {
+            Toast.makeText(this, "Monitoring dimulai", Toast.LENGTH_SHORT).show()
+        }
+
+        // Stop button
+        stopButton.setOnClickListener {
+            Toast.makeText(this, "Monitoring dihentikan", Toast.LENGTH_SHORT).show()
+
+        }
+
         // Logout
         logoutIcon.setOnClickListener {
             auth.signOut()
