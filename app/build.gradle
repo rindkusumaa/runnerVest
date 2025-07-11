@@ -7,6 +7,14 @@ plugins {
 android {
     namespace 'com.rindakusuma.runvest'
     compileSdk 35
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        coreLibraryDesugaringEnabled true
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
 
     buildFeatures {
         viewBinding true
@@ -55,6 +63,8 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'com.google.firebase:firebase-messaging:23.1.2'
     implementation 'com.google.firebase:firebase-messaging-ktx'
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 
 }
 apply plugin: 'com.google.gms.google-services'

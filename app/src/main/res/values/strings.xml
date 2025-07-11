@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">RunVest</string>
+    <string-array name="filter_options">
+        <item>Harian</item>
+        <item>Mingguan</item>
+        <item>Bulanan</item>
+        <item>Rentang Tanggal</item>
+    </string-array>
+
 </resources>
