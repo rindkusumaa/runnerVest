@@ -43,26 +43,30 @@ class RegisterActivity : AppCompatActivity() {
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
                         val uid = auth.currentUser?.uid
+                        if (uid == null) {
+                            Toast.makeText(this, "UID tidak ditemukan", Toast.LENGTH_SHORT).show()
+                            return@addOnCompleteListener
+                        }
+
                         val dbRef = FirebaseDatabase.getInstance().getReference("users")
 
+                        // Simpan nama, email, role, dan deviceId
                         val profileData = mapOf(
                             "name" to name,
-                            "email" to email
+                            "email" to email,
+                            "role" to "atlet",
+                            "deviceId" to "alat02"
                         )
 
-                        uid?.let {
-                            dbRef.child(it).child("profile").setValue(profileData)
-                                .addOnSuccessListener {
-                                    Toast.makeText(this, "Registrasi berhasil", Toast.LENGTH_SHORT).show()
-                                    startActivity(Intent(this, HomeActivity::class.java))
-                                    finish()
-                                }
-                                .addOnFailureListener {
-                                    Toast.makeText(this, "Gagal simpan profil", Toast.LENGTH_SHORT).show()
-                                }
-                        } ?: run {
-                            Toast.makeText(this, "UID tidak ditemukan", Toast.LENGTH_SHORT).show()
-                        }
+                        dbRef.child(uid).child("profile").setValue(profileData)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Registrasi berhasil", Toast.LENGTH_SHORT).show()
+                                startActivity(Intent(this, LoginActivity::class.java))
+                                finish()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(this, "Gagal simpan data: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
 
                     } else {
                         Toast.makeText(this, "Registrasi gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()

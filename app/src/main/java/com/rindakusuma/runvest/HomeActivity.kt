@@ -29,7 +29,6 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var auth: FirebaseAuth
     private lateinit var notificationManager: NotificationManager
 
-    // UI Components
     private lateinit var heartRateTextView: TextView
     private lateinit var temperatureTextView: TextView
     private lateinit var speedTextView: TextView
@@ -39,7 +38,6 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var bottomNavigation: BottomNavigationView
     private lateinit var startButton: Button
     private lateinit var stopButton: Button
-
 
     companion object {
         private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1001
@@ -54,13 +52,8 @@ class HomeActivity : AppCompatActivity() {
         database = FirebaseDatabase.getInstance().reference
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        // Initialize FCM
         setupFirebaseMessaging()
-
-        // Check and request notification permission
         checkNotificationPermission()
-
-        // Initialize UI components
         initUI()
 
         val uid = auth.currentUser?.uid
@@ -69,10 +62,7 @@ class HomeActivity : AppCompatActivity() {
             return
         }
 
-        // Setup Firebase Realtime Database
         setupFirebaseDatabase(uid)
-
-        // Setup event listeners
         setupEventListeners()
     }
 
@@ -82,26 +72,13 @@ class HomeActivity : AppCompatActivity() {
                 Log.w("FCM", "Fetching FCM registration token failed", task.exception)
                 return@addOnCompleteListener
             }
-
-            // Get new FCM registration token
             val token = task.result
-            Log.d("FCM", "FCM Token: $token")
-
-            // You can send this token to your server if needed
             sendTokenToServer(token)
         }
-
-        // Subscribe to topic for broadcast messages
         FirebaseMessaging.getInstance().subscribeToTopic("alerts")
-            .addOnCompleteListener { task ->
-                if (!task.isSuccessful) {
-                    Log.w("FCM", "Subscribe to alerts topic failed", task.exception)
-                }
-            }
     }
 
     private fun sendTokenToServer(token: String) {
-        // Implement your logic to send token to server
         val uid = auth.currentUser?.uid
         uid?.let {
             database.child("users").child(it).child("fcmToken").setValue(token)
@@ -110,38 +87,16 @@ class HomeActivity : AppCompatActivity() {
 
     private fun checkNotificationPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            when {
-                ContextCompat.checkSelfPermission(
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
                     this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    // Permission already granted
-                }
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) -> {
-                    // Explain why you need the permission
-                    Toast.makeText(
-                        this,
-                        "Notifikasi diperlukan untuk menerima peringatan kesehatan",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    requestNotificationPermission()
-                }
-                else -> {
-                    requestNotificationPermission()
-                }
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    NOTIFICATION_PERMISSION_REQUEST_CODE
+                )
             }
         }
-    }
-
-    private fun requestNotificationPermission() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-            NOTIFICATION_PERMISSION_REQUEST_CODE
-        )
     }
 
     private fun initUI() {
@@ -163,30 +118,43 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun setupFirebaseDatabase(uid: String) {
-        // Set UID to config so ESP32 knows which user is active
-        database.child("config").child("activeDeviceUid").setValue(uid)
+        database.child("users").child(uid).child("profile")
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val name = snapshot.child("name").getValue(String::class.java) ?: "Runner"
+                    val deviceId = snapshot.child("deviceId").getValue(String::class.java)
 
-        // Get user name
-        database.child("users").child(uid).child("profile").child("name").get()
-            .addOnSuccessListener { snapshot ->
-                val name = snapshot.getValue(String::class.java) ?: "Runner"
-                greetingTextView.text = "Good day, $name 👋"
-            }
-            .addOnFailureListener {
-                greetingTextView.text = "Hello, ${auth.currentUser?.email} 👋"
-            }
+                    greetingTextView.text = "Good day, $name 👋"
 
-        // Get latest activity data
-        fetchLatestActivityData(uid)
+                    if (deviceId != null) {
+                        fetchLatestActivityData(deviceId)
+                    } else {
+                        Toast.makeText(this@HomeActivity, "Device ID belum diatur untuk pengguna ini", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    greetingTextView.text = "Hello, ${auth.currentUser?.email} 👋"
+                }
+            })
     }
 
-    private fun fetchLatestActivityData(uid: String) {
-        val aktivitasRef = database.child("aktivitas").child(uid)
+    private fun fetchLatestActivityData(deviceId: String) {
+        val aktivitasRef = database.child("devices").child(deviceId).child("aktivitas")
         aktivitasRef.orderByKey().limitToLast(1)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
+                    Log.d("FirebaseDebug", "Jumlah data aktivitas: ${snapshot.childrenCount}")
                     val latestSnapshot = snapshot.children.firstOrNull()
-                    latestSnapshot?.let { updateUIWithActivityData(it) }
+                    if (latestSnapshot != null) {
+                        updateUIWithActivityData(latestSnapshot)
+                    } else {
+                        Toast.makeText(
+                            this@HomeActivity,
+                            "Belum ada aktivitas yang terekam",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
@@ -200,44 +168,32 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun updateUIWithActivityData(snapshot: DataSnapshot) {
-        // Heart rate
         val detak = snapshot.child("detakJantung").getValue(Int::class.java)
         heartRateTextView.text = "${detak ?: "-"} bpm"
-        if (detak != null && detak > 190) {
-            showHealthAlert("Peringatan Kesehatan", "Detak jantung terlalu tinggi!")
-        }
+        if (detak != null && detak > 190) showHealthAlert("Peringatan Kesehatan", "Detak jantung terlalu tinggi!")
 
-        // Temperature
         val suhu = snapshot.child("suhuTubuh").getValue(Double::class.java)?.toInt()
         temperatureTextView.text = "${suhu ?: "-"}°"
-        if (suhu != null && suhu >= 39) {
-            showHealthAlert("Peringatan Kesehatan", "Suhu tubuh terlalu tinggi!")
-        }
+        if (suhu != null && suhu >= 39) showHealthAlert("Peringatan Kesehatan", "Suhu tubuh terlalu tinggi!")
 
-        // Speed
         val speed = snapshot.child("kecepatan").getValue(Double::class.java)
         val speedFormatted = if (speed != null) String.format("%.2f", speed) else "-"
         speedTextView.text = "$speedFormatted km/jam"
 
-        // Distance
         val jarak = snapshot.child("jarak").getValue(Double::class.java)
         val jarakFormatted = if (jarak != null) String.format("%.2f", jarak) else "-"
         distanceTextView.text = "$jarakFormatted km"
     }
 
     private fun setupEventListeners() {
-        // Start button
         startButton.setOnClickListener {
             Toast.makeText(this, "Monitoring dimulai", Toast.LENGTH_SHORT).show()
         }
 
-        // Stop button
         stopButton.setOnClickListener {
             Toast.makeText(this, "Monitoring dihentikan", Toast.LENGTH_SHORT).show()
-
         }
 
-        // Logout
         logoutIcon.setOnClickListener {
             auth.signOut()
             val intent = Intent(this, LoginActivity::class.java)
@@ -246,7 +202,6 @@ class HomeActivity : AppCompatActivity() {
             finish()
         }
 
-        // Bottom navigation
         bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> true
@@ -262,13 +217,8 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun showHealthAlert(title: String, message: String) {
-        // Show in-app toast
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-
-        // Show notification
         showNotification(title, message)
-
-        // You could also trigger vibration or other alerts here
     }
 
     private fun createNotificationChannel() {
@@ -307,33 +257,6 @@ class HomeActivity : AppCompatActivity() {
             .setAutoCancel(true)
             .build()
 
-        // Use unique ID for each notification
-        val notificationId = System.currentTimeMillis().toInt()
-        notificationManager.notify(notificationId, notification)
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        when (requestCode) {
-            NOTIFICATION_PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() &&
-                    grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Permission granted
-                    Toast.makeText(this, "Izin notifikasi diberikan", Toast.LENGTH_SHORT).show()
-                } else {
-                    // Permission denied
-                    Toast.makeText(
-                        this,
-                        "Izin notifikasi ditolak, Anda mungkin melewatkan peringatan penting",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
+        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
     }
 }

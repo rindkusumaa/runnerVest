@@ -3,17 +3,15 @@ package com.rindakusuma.runvest
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ProgressBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.*
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var auth: FirebaseAuth
+    private lateinit var database: DatabaseReference
     private lateinit var emailField: EditText
     private lateinit var passwordField: EditText
     private lateinit var loginBtn: Button
@@ -26,45 +24,33 @@ class LoginActivity : AppCompatActivity() {
         setContentView(R.layout.activity_login)
 
         auth = FirebaseAuth.getInstance()
+        database = FirebaseDatabase.getInstance().reference
+
         progressBar = findViewById(R.id.progressBar)
-
-        // Cek apakah user sudah login
-        val user = auth.currentUser
-        if (user != null) {
-            startActivity(Intent(this, HomeActivity::class.java))
-            finish()
-        }
-
-
         emailField = findViewById(R.id.emailEditText)
         passwordField = findViewById(R.id.passwordEditText)
         loginBtn = findViewById(R.id.loginButton)
         togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility)
 
         val registerTextView: TextView = findViewById(R.id.registerTextView)
-
         registerTextView.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
-
 
         loginBtn.setOnClickListener {
             val email = emailField.text.toString()
             val password = passwordField.text.toString()
 
             if (email.isNotEmpty() && password.isNotEmpty()) {
-                progressBar.visibility = View.VISIBLE  // Tampilkan progress bar saat login
+                progressBar.visibility = View.VISIBLE
                 loginUser(email, password)
             } else {
                 Toast.makeText(this, "Isi semua field!", Toast.LENGTH_SHORT).show()
             }
         }
 
-        // Toggle password visibility
         togglePasswordVisibility.setOnClickListener {
             isPasswordVisible = !isPasswordVisible
-
             if (isPasswordVisible) {
                 passwordField.inputType = android.text.InputType.TYPE_CLASS_TEXT or
                         android.text.InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
@@ -74,7 +60,6 @@ class LoginActivity : AppCompatActivity() {
                         android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
                 togglePasswordVisibility.setBackgroundResource(R.drawable.ic_visibility)
             }
-
             passwordField.setSelection(passwordField.text.length)
         }
     }
@@ -82,16 +67,42 @@ class LoginActivity : AppCompatActivity() {
     private fun loginUser(email: String, password: String) {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
-                progressBar.visibility = View.GONE  // Sembunyikan progress bar setelah proses login selesai
+                progressBar.visibility = View.GONE
                 if (task.isSuccessful) {
-                    startActivity(Intent(this, HomeActivity::class.java))
-                    finish()
+                    val uid = auth.currentUser?.uid ?: return@addOnCompleteListener
+                    val dbRef = FirebaseDatabase.getInstance().reference
+
+                    dbRef.child("users").child(uid).child("profile").child("role")
+                        .addListenerForSingleValueEvent(object : ValueEventListener {
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                val role = snapshot.getValue(String::class.java)
+
+                                when (role) {
+                                    "atlet" -> {
+                                        startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
+                                        finish()
+                                    }
+                                    "pelatih" -> {
+                                        startActivity(Intent(this@LoginActivity, DaftarAtletActivity::class.java))
+                                        finish()
+                                    }
+                                    null -> {
+                                        Toast.makeText(this@LoginActivity, "Role belum diatur. Silakan registrasi ulang.", Toast.LENGTH_SHORT).show()
+                                        FirebaseAuth.getInstance().signOut()
+                                    }
+                                    else -> {
+                                        Toast.makeText(this@LoginActivity, "Role tidak dikenali: $role", Toast.LENGTH_SHORT).show()
+                                        FirebaseAuth.getInstance().signOut()
+                                    }
+                                }
+                            }
+
+                            override fun onCancelled(error: DatabaseError) {
+                                Toast.makeText(this@LoginActivity, "Gagal membaca role", Toast.LENGTH_SHORT).show()
+                            }
+                        })
                 } else {
-                    Toast.makeText(
-                        this,
-                        "Login gagal: ${task.exception?.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(this, "Login gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }
     }
