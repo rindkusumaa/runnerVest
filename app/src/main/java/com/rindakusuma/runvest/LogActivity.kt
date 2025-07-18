@@ -44,6 +44,10 @@ class LogActivity : AppCompatActivity() {
         database = FirebaseDatabase.getInstance().reference
         spinnerFilter = findViewById(R.id.spinnerFilter)
         chartSensor = findViewById(R.id.chartSensor)
+        recyclerView = findViewById(R.id.logRecyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        adapter = ActivityLogAdapter(activityLogs)
+        recyclerView.adapter = adapter
 
         val filterAdapter = ArrayAdapter.createFromResource(
             this, R.array.filter_options, android.R.layout.simple_spinner_item
@@ -69,11 +73,6 @@ class LogActivity : AppCompatActivity() {
         }
 
         swipeRefreshLayout = findViewById(R.id.SwipeRefreshLayout)
-        recyclerView = findViewById(R.id.logRecyclerView)
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        adapter = ActivityLogAdapter(activityLogs)
-        recyclerView.adapter = adapter
-
         swipeRefreshLayout.setOnRefreshListener {
             ambilData(uid)
         }
@@ -99,7 +98,8 @@ class LogActivity : AppCompatActivity() {
     private fun ambilData(uid: String) {
         swipeRefreshLayout.isRefreshing = true
 
-        val aktivitasRef = database.child("aktivitas").child(uid)
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val aktivitasRef = database.child("aktivitas").child(uid!!)
         aktivitasRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val logs = mutableListOf<ActivityLogRaw>()
@@ -141,7 +141,6 @@ class LogActivity : AppCompatActivity() {
                 "Bulanan" -> date != null && date.month == today.month && date.year == today.year
                 else -> true
             }
-
         }
 
         tampilkanRecyclerView(filtered)

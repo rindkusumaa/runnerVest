@@ -1,36 +1,37 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
     android:padding="12dp"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="#F0F0F0"
-    android:layout_marginBottom="8dp">
+    android:layout_height="wrap_content">
 
     <TextView
         android:id="@+id/logWaktu"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="14sp"
+        android:text="Waktu"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/logDetak"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="Detak Jantung" />
 
     <TextView
         android:id="@+id/logSuhu"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="Suhu Tubuh" />
 
     <TextView
         android:id="@+id/logKecepatan"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="Kecepatan" />
 
     <TextView
         android:id="@+id/logJarak"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:text="Jarak Tempuh" />
 </LinearLayout>

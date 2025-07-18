@@ -50,12 +50,9 @@ class RegisterActivity : AppCompatActivity() {
 
                         val dbRef = FirebaseDatabase.getInstance().getReference("users")
 
-                        // Simpan nama, email, role, dan deviceId
                         val profileData = mapOf(
                             "name" to name,
-                            "email" to email,
-                            "role" to "atlet",
-                            "deviceId" to "alat02"
+                            "email" to email
                         )
 
                         dbRef.child(uid).child("profile").setValue(profileData)

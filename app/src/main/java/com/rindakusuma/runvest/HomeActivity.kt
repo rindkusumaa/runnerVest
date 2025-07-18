@@ -117,52 +117,92 @@ class HomeActivity : AppCompatActivity() {
         finish()
     }
 
-    private fun setupFirebaseDatabase(uid: String) {
-        database.child("users").child(uid).child("profile")
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
+//    private fun setupFirebaseDatabase(uid: String) {
+//        Log.d("FirebaseDebug", "Mengambil data untuk UID: $uid")
+//        database.child("users").child(uid).child("profile")
+//            .addListenerForSingleValueEvent(object : ValueEventListener {
+//                override fun onDataChange(snapshot: DataSnapshot) {
+//                    if (snapshot.exists()) {
+//                        val name = snapshot.child("name").getValue(String::class.java) ?: "Runner"
+//                        val deviceId = snapshot.child("deviceId").getValue(String::class.java)
+//
+//                        greetingTextView.text = "Good day, $name 👋"
+//
+//                        if (deviceId != null) {
+//                            fetchLatestActivityData(deviceId)
+//                        } else {
+//                            Toast.makeText(this@HomeActivity, "Device ID belum diatur untuk pengguna ini", Toast.LENGTH_SHORT).show()
+//                        }
+//                    } else {
+//                        Log.e("FirebaseDebug", "Data pengguna tidak ditemukan untuk UID: $uid")
+//                        Toast.makeText(this@HomeActivity, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+private fun setupFirebaseDatabase(uid: String) {
+    Log.d("FirebaseDebug", "Mengambil data untuk UID: $uid")
+    database.child("users").child(uid).child("profile")
+        .addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
                     val name = snapshot.child("name").getValue(String::class.java) ?: "Runner"
-                    val deviceId = snapshot.child("deviceId").getValue(String::class.java)
-
                     greetingTextView.text = "Good day, $name 👋"
 
-                    if (deviceId != null) {
-                        fetchLatestActivityData(deviceId)
-                    } else {
-                        Toast.makeText(this@HomeActivity, "Device ID belum diatur untuk pengguna ini", Toast.LENGTH_SHORT).show()
-                    }
+                    fetchLatestActivityData(uid)
+                } else {
+                    Log.e("FirebaseDebug", "Data pengguna tidak ditemukan untuk UID: $uid")
+                    Toast.makeText(this@HomeActivity, "Data pengguna tidak ditemukan", Toast.LENGTH_SHORT).show()
                 }
+            }
 
                 override fun onCancelled(error: DatabaseError) {
-                    greetingTextView.text = "Hello, ${auth.currentUser?.email} 👋"
+                    Log.e("FirebaseDebug", "Error saat mengambil data: ${error.message}")
+                    greetingTextView.text = "Hello, ${auth.currentUser ?.email} 👋"
                 }
             })
     }
 
-    private fun fetchLatestActivityData(deviceId: String) {
-        val aktivitasRef = database.child("devices").child(deviceId).child("aktivitas")
+    private fun fetchLatestActivityData(uid: String) {
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        val aktivitasRef = database.child("aktivitas").child(uid!!)
         aktivitasRef.orderByKey().limitToLast(1)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    Log.d("FirebaseDebug", "Jumlah data aktivitas: ${snapshot.childrenCount}")
-                    val latestSnapshot = snapshot.children.firstOrNull()
-                    if (latestSnapshot != null) {
-                        updateUIWithActivityData(latestSnapshot)
+                    if (snapshot.exists()) {
+                        val latestSnapshot = snapshot.children.firstOrNull()
+                        if (latestSnapshot != null) {
+                            updateUIWithActivityData(latestSnapshot)
+                        } else {
+                            Toast.makeText(this@HomeActivity, "Belum ada aktivitas yang terekam", Toast.LENGTH_SHORT).show()
+                        }
                     } else {
-                        Toast.makeText(
-                            this@HomeActivity,
-                            "Belum ada aktivitas yang terekam",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Log.e("FirebaseDebug", "Tidak ada data aktivitas untuk UID: $uid")
+                        Toast.makeText(this@HomeActivity, "Tidak ada data aktivitas", Toast.LENGTH_SHORT).show()
                     }
                 }
+//    private fun fetchLatestActivityData(deviceId: String) {
+//        val uid = auth.currentUser ?.uid
+//        Log.d("FirebaseDebug", "UID: $uid, Device ID: $deviceId")
+//
+//        val aktivitasRef = database.child("devices").child(deviceId).child("aktivitas")
+//        aktivitasRef.orderByKey().limitToLast(1)
+//            .addValueEventListener(object : ValueEventListener {
+//                override fun onDataChange(snapshot: DataSnapshot) {
+//                    if (snapshot.exists()) {
+//                        val latestSnapshot = snapshot.children.firstOrNull()
+//                        if (latestSnapshot != null) {
+//                            updateUIWithActivityData(latestSnapshot)
+//                        } else {
+//                            Toast.makeText(this@HomeActivity, "Belum ada aktivitas yang terekam", Toast.LENGTH_SHORT).show()
+//                        }
+//                    } else {
+//                        Log.e("FirebaseDebug", "Tidak ada data aktivitas untuk deviceId: $deviceId")
+//                        Toast.makeText(this@HomeActivity, "Tidak ada data aktivitas", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
 
                 override fun onCancelled(error: DatabaseError) {
-                    Toast.makeText(
-                        this@HomeActivity,
-                        "Gagal memuat data aktivitas",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Log.e("FirebaseDebug", "Gagal memuat data aktivitas: ${error.message}")
+                    Toast.makeText(this@HomeActivity, "Gagal memuat data aktivitas", Toast.LENGTH_SHORT).show()
                 }
             })
     }
