@@ -34,6 +34,8 @@
         <activity android:name=".LogActivity" android:exported="false" />
         <activity android:name=".RegisterActivity" android:exported="false" />
         <activity android:name=".DaftarAtletActivity" />
+        <activity android:name=".DetailAtletActivity" />
+
 
 
         <service
